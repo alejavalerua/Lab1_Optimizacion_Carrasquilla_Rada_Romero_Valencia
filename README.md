@@ -22,7 +22,7 @@
 ## ⚙️ Instalación y ejecución
 1. Clonar el repositorio:
 ```
-git clone 
+git clone https://github.com/alejavalerua/Lab1_Optimizacion_Carrasquilla_Rada_Romero_Valencia.git
 ```
 2. Ejecutar el programa principal:
 ```

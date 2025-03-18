@@ -17,7 +17,7 @@
 ### 1️⃣ Problema de optimización de dos variables
 ### 2️⃣ Representación de matrices sparse
 ### 3️⃣ Expansión en series de Taylor
-### 4️⃣ Optimización sin restricciones\
+### 4️⃣ Optimización sin restricciones
 
 ## ⚙️ Instalación y ejecución
 1. Clonar el repositorio:

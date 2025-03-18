@@ -32,3 +32,11 @@ python main.py
 ## 📚 Tecnologías utilizadas
 + Python (NumPy, Matplotlib, SciPy, etc.)
 + Interfaz gráfica en Tkinter
+
+## 🚀 Ejecutar en Google Colab  
+Haz clic en el botón para abrir el notebook en Google Colab:  
+
+[![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1m-bvmhvGqkPHeHYkcA01Oto40QZZGpw5?usp=sharing)
+
+O accede manualmente con este enlace:  
+🔗 [Notebook en Google Colab](https://colab.research.google.com/drive/1m-bvmhvGqkPHeHYkcA01Oto40QZZGpw5?usp=sharing)

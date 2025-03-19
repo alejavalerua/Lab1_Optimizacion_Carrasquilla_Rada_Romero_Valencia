@@ -2,10 +2,10 @@ import numpy as np
 import sympy as sp
 import tkinter as tk
 from tkinter import ttk
+import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from PIL import Image, ImageTk
-import pylatex as pl
 from sympy import *
 
 class Aplicacion(tk.Tk):
@@ -118,9 +118,100 @@ class Pagina1(tk.Frame):
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.configure(width=1000, height=650, bg="#dad2d8", bd=5)
-        tk.Label(self, text="Página 1", font=("Times New Roman", 16)).pack(pady=20)
+        title_P1 = tk.Label(self, text="Región Factible")
+        title_P1.config(fg="black", bg="#dad2d8", font=("Times New Roman", 20, "bold", "underline"))
+        title_P1.pack(pady=10)
+
+        # texto
+        texto = tk.Label(self, text="Problema de optimización:", font=("Times New Roman", 13, "bold"), fg="black", bg="#dad2d8", wraplength=800, justify="left")
+        texto.pack(pady=2, anchor="w", padx=40)
+        texto1 = tk.Label(self, text="Una empresa fabrica dos tipos de productos: A y B. Cada unidad del producto A genera una ganancia de $5 y cada unidad del producto B genera una ganancia de $8. La empresa tiene 120 horas de trabajo disponibles y 100 unidades de materia prima.\n",font=("Times New Roman", 12), fg="black", bg="#dad2d8", wraplength=380, justify="left")
+        texto1.pack(pady=2, anchor="w", padx=40)
+        texto2 = tk.Label(self, text="Función de costo (Objetivo):", font=("Times New Roman", 13, "bold"), fg="black", bg="#dad2d8", wraplength=800, justify="left")
+        texto2.pack(pady=2, anchor="w", padx=40)
+        texto3 = tk.Label(self, text="Maximizar Z = 5x +  8y\n\nSujeto a:\n✍ cx + dy <= 120\n✍ gx + hy <= 100\n✍ x, y >= 0\n", font=("Times New Roman", 12), fg="black", bg="#dad2d8", wraplength=380, justify="left")
+        texto3.pack(pady=2, anchor="w", padx=40)
+        texto4 = tk.Label(self, text="El objetivo es determinar cuántas unidades de A y B debe producir la empresa para maximizar la ganancia.", font=("Times New Roman", 12, "bold"), fg="black", bg="#dad2d8", wraplength=380, justify="left")
+        texto4.pack(pady=5, anchor="w", padx=40)
+
+        # Frame para las restricciones
+        frame_restricciones = tk.Frame(self, bg="#dad2d8")
+        frame_restricciones.pack(anchor="w", padx=40, pady=5)
+
+        # Etiquetas y Entry para restricciones
+        labels = ["c:", "d:", "r1:", "g:", "h:", "r2:"]
+        self.entries = {}
+
+        for i, label in enumerate(labels):
+            tk.Label(frame_restricciones, text=label, font=("Times New Roman", 12), bg="#dad2d8").grid(row=i, column=0, padx=5, pady=2, sticky="w")
+            entry = tk.Entry(frame_restricciones, width=10)
+            entry.grid(row=i, column=1, padx=5, pady=2)
+            self.entries[label] = entry  # Guardamos la referencia al Entry
+
+        # Botón para ejecutar la optimización
+        ttk.Button(self, text="Calcular y Graficar", command=self.calcular_optimizacion,
+                   style="Rounded.TButton").place(relx=1.0, rely=0.0, anchor="ne", x=-20, y=50)
+        
         ttk.Button(self, text="Volver al Inicio", command=lambda: controller.mostrar_frame(Inicio),
                    style="Rounded.TButton").place(relx=1.0, rely=1.0, anchor="se", x=-20, y=-20)
+
+        # Frame para la gráfica
+        self.frame_grafica = tk.Frame(self, bg="#dad2d8")
+        self.frame_grafica.pack(pady=20)
+
+        # Frame para los valores x, y y Z
+        frame_valores = tk.Frame(self, bg="#dad2d8")
+        frame_valores.pack(pady=10)
+
+        for i, text in enumerate(["X:", "Y:", "Z:"]):
+            tk.Label(frame_valores, text=text, font=("Times New Roman", 12), bg="#dad2d8").grid(row=0, column=i*2, padx=5, pady=2)
+            entry = tk.Entry(frame_valores, width=10)
+            entry.grid(row=0, column=i*2+1, padx=5, pady=2)
+            setattr(self, f"entry_{text.lower()[0]}", entry)        
+
+    def calcular_optimizacion(self):
+        try:
+            c, d, r1 = float(self.entries["c:"].get()), float(self.entries["d:"].get()), float(self.entries["r1:"].get())
+            g, h, r2 = float(self.entries["g:"].get()), float(self.entries["h:"].get()), float(self.entries["r2:"].get())
+            
+            A = np.array([[c, d], [g, h]])
+            B = np.array([r1, r2])
+            x_inter, y_inter = np.linalg.solve(A, B)
+            
+            x_vals = np.linspace(0, 40, 100)
+            y1 = (r1 - c*x_vals) / d
+            y2 = (r2 - g*x_vals) / h
+            
+            fig = plt.figure(figsize=(8, 6))
+            plt.plot(x_vals, y1, label=f'{c}x + {d}y = {r1}', color='blue')
+            plt.plot(x_vals, y2, label=f'{g}x + {h}y = {r2}', color='green')
+            plt.fill_between(x_vals, np.minimum(y1, y2), 0, where=(np.minimum(y1, y2) >= 0), color='gray', alpha=0.3)
+            plt.scatter(x_inter, y_inter, color='red', zorder=5, label="Intersección")
+            plt.xlim(0, 40)
+            plt.ylim(0, 40)
+            plt.xlabel('Unidades de A (x)')
+            plt.ylabel('Unidades de B (y)')
+            plt.legend()
+            plt.title('Región Factible')
+            plt.grid(True)
+            
+            for widget in self.frame_grafica.winfo_children():
+                widget.destroy()
+            
+            canvas = FigureCanvasTkAgg(fig, master=self.frame_grafica)
+            canvas.draw()
+            canvas.get_tk_widget().pack()
+            
+            self.entry_x.delete(0, tk.END)
+            self.entry_x.insert(0, round(x_inter, 2))
+            self.entry_y.delete(0, tk.END)
+            self.entry_y.insert(0, round(y_inter, 2))
+            self.entry_z.delete(0, tk.END)
+            self.entry_z.insert(0, round(5*x_inter + 8*y_inter, 2))
+        
+        except Exception as e:
+            print("Error en el cálculo:", e)
+            tk.messagebox.showerror("Error", "Ocurrió un error al calcular la optimización. Verifica los datos ingresados.")
 
 class Pagina2(tk.Frame):
     def __init__(self, parent, controller):

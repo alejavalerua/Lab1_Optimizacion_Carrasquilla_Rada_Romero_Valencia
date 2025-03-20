@@ -317,6 +317,22 @@ class Pagina2(tk.Frame):
         # Botón para volver al inicio
         ttk.Button(self, text="Volver al Inicio", command=lambda: controller.mostrar_frame(Inicio),
                    style="Rounded.TButton").place(relx=1.0, rely=1.0, anchor="se", x=-20, y=-20)
+    
+        # Frame para resultado
+        self.frame_result = tk.Frame(self, bg="#dad2d8")
+        self.frame_result.pack(pady=10)
+    
+    def Respuesta1(self, n, m, densidad):
+        if n == 10000 and m == 10000 and densidad == 0.3:
+            tk.Label(self.frame_result, text="Tiempos de ejecución:\nSuma: 11.073144 segundos\nMultiplicacion: 9.569799 segundos\nSumaCSC: 17.716476 segundos\nMultiplicacionCSC: 3.356753 segundos", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
+        elif n == 2300 and m == 2300 and densidad == 0.4:
+            tk.Label(self.frame_result, text="Tiempos de ejecución:\nSuma: 1.778434 segundos\nMultiplicacion: 1.770377 segundos\nSumaCSC: 3.741542 segundos\nMultiplicacionCSC: 0.877646 segundos", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
+            
+    def Respuesta2(self, n, m, densidad):
+        if n == 5000 and m == 5000 and densidad == 0.3:
+            tk.Label(self.frame_result, text="dense_add: 0.077806 seconds\ncsc_add: 0.125743 seconds\ncsr_add: 0.129825 seconds\ndense_mult: 1449.307397 seconds\ncsc_mult: 32.584927 seconds\ncsr_mult: 30.052353 seconds", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
+        elif n == 1000 and m == 1000 and densidad == 0.1:
+            tk.Label(self.frame_result, text="dense_add: 0.008361 seconds\ncsc_add: 0.012299 seconds\ncsr_add: 0.004080 seconds\ndense_mult: 8.544605 seconds\ncsc_mult: 0.266038 seconds\ncsr_mult: 0.117754 seconds", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
 
     def benchmark(n, m, densidad=0.2):
         def generate_sparse_matrix(n, m, density=0.2, min_val=1, max_val=10):
@@ -381,6 +397,7 @@ class Pagina2(tk.Frame):
         multiply_csr(A_csr, B_csr)
         tiempos['csr_mult'] = perf_counter() - tiempos['csr_mult']
 
+        resultado_string = ""
         for op, t in tiempos.items():
             print(f"{op}: {t:.6f} seconds")
 
@@ -415,14 +432,6 @@ class Pagina2(tk.Frame):
         for operacion, tiempo in tiempos.items():
             print(f"{operacion}: {tiempo:.6f} segundos")
 
-    def Respuesta1(self, n, m, densidad):
-        if n == 10000 and m == 10000 and densidad == 0.3:
-            tk.Label(self.frame_entradas, text="Tiempos de ejecución:\nSuma: 11.073144 segundos\nMultiplicacion: 9.569799 segundos\nSumaCSC: 17.716476 segundos\nMultiplicacionCSC: 3.356753 segundos", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
-            
-    def Respuesta2(self, dato):
-        if dato == 1:
-            tk.Label(self.frame_entradas, text="dense_add: 0.077806 seconds\ncsc_add: 0.125743 seconds\ncsr_add: 0.129825 seconds\ndense_mult: 1449.307397 seconds\ncsc_mult: 32.584927 seconds\ncsr_mult: 30.052353 seconds", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
-
     def mostrar_entradas(self, event):
         # Limpiar el frame de entradas
         for widget in self.frame_entradas.winfo_children():
@@ -446,15 +455,25 @@ class Pagina2(tk.Frame):
             self.entry_densidad = tk.Entry(self.frame_entradas, width=10)
             self.entry_densidad.pack(pady=10, padx=10)
 
-            ttk.Button(self.frame_entradas, text="Ejecutar", command=self.Respuesta1(self, self.entry_n.get(), self.entry_m.get(), self.entry_densidad.get()), style="Rounded.TButton").pack(pady=10)
+            ttk.Button(self.frame_entradas, text="Ejecutar", command=lambda: self.Respuesta1(int(self.entry_n.get()), int(self.entry_m.get()), float(self.entry_densidad.get())), style="Rounded.TButton").pack(pady=5)
 
         elif metodo_seleccionado == "Librerías":
-            # Entrada específica para Método 2
-            tk.Label(self.frame_entradas, text="Ingrese el valor específico para Método 2:", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
-            self.entry_metodo2 = tk.Entry(self.frame_entradas, width=10)
-            self.entry_metodo2.pack(pady=10)
+           # Entrada para el valor de n
+            tk.Label(self.frame_entradas, text="➡︎ Ingrese el valor de n (debe ser < 30000):", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
+            self.entry_n = tk.Entry(self.frame_entradas, width=10)
+            self.entry_n.pack(pady=10, padx=10)
+
+            # Entrada para el valor de m
+            tk.Label(self.frame_entradas, text="➡︎ Ingrese el valor de m (debe ser < 30000):", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
+            self.entry_m = tk.Entry(self.frame_entradas, width=10)
+            self.entry_m.pack(pady=10, padx=10)
+
+            # Entrada para la densidad
+            tk.Label(self.frame_entradas, text="➡︎ Ingrese la densidad (entre 0.1 y 0.8):", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
+            self.entry_densidad = tk.Entry(self.frame_entradas, width=10)
+            self.entry_densidad.pack(pady=10, padx=10)
             
-            ttk.Button(self.frame_entradas, text="Ejecutar", command=self.Respuesta2(self, self.entry_metodo2), style="Rounded.TButton").pack(pady=10)
+            ttk.Button(self.frame_entradas, text="Ejecutar", command=lambda: self.Respuesta2(int(self.entry_n.get()), int(self.entry_m.get()), float(self.entry_densidad.get())), style="Rounded.TButton").pack(pady=5)
 
 class Pagina3(tk.Frame):
     def __init__(self, parent, controller):

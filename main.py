@@ -2,11 +2,15 @@ import numpy as np
 import sympy as sp
 import tkinter as tk
 from tkinter import ttk
+from tkinter import messagebox
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from PIL import Image, ImageTk
 from sympy import *
+from scipy.optimize import minimize
+from centrar_ventanas import center_window_method
+import time
 
 class Aplicacion(tk.Tk):
     def __init__(self):
@@ -220,6 +224,13 @@ class Pagina2(tk.Frame):
         tk.Label(self, text="Página 2", font=("Times New Roman", 16)).pack(pady=20)
         ttk.Button(self, text="Volver al Inicio", command=lambda: controller.mostrar_frame(Inicio),
                    style="Rounded.TButton").place(relx=1.0, rely=1.0, anchor="se", x=-20, y=-20)
+        
+        tk.Label(self, text="Seleccione un método de representación:", font=("Times New Roman", 14, "bold"), bg="#dad2d8").pack(pady=10)
+    
+        self.metodos = ["Método 1", "Método 2", "Método 3"]
+        self.combo_metodos = ttk.Combobox(self, values=self.metodos, state="readonly", font=("Times New Roman", 12))
+        self.combo_metodos.pack(pady=10)
+        self.combo_metodos.current(0)
 
 class Pagina3(tk.Frame):
     def __init__(self, parent, controller):
@@ -326,14 +337,351 @@ class Pagina3(tk.Frame):
             tk.messagebox.showerror("Error", "Ocurrió un error al generar la gráfica. Verifica los datos ingresados.")
             return
         
+
+
 class Pagina4(tk.Frame):
     def __init__(self, parent, controller):
         super().__init__(parent)
+        self.controller = controller
         self.configure(width=1000, height=650, bg="#dad2d8", bd=5)
-        tk.Label(self, text="Página 4", font=("Times New Roman", 16)).pack(pady=20)
-        ttk.Button(self, text="Volver al Inicio", command=lambda: controller.mostrar_frame(Inicio),
-                   style="Rounded.TButton").place(relx=1.0, rely=1.0, anchor="se", x=-20, y=-20)
+        
+        self.crear_interfaz_principal()
+
+    def crear_interfaz_principal(self):
+        """Crea la interfaz de la página 4 con sus botones."""
+        for widget in self.winfo_children():
+            widget.destroy()
+
+        tk.Label(self, text="Optimización sin Restricciones", font=("Times New Roman", 16)).pack(pady=10)
+        ttk.Button(self, text="Algoritmo de Newton", command=self.abrir_ventana_newton, style="Rounded.TButton").pack(pady=20)
+        ttk.Button(self, text="Gradiente Descendente", command=self.abrir_ventana_gradiente, style="Rounded.TButton").pack(pady=20)
+        ttk.Button(self, text="Nelder-Mead", command=self.abrir_ventana_nelder_mead, style="Rounded.TButton").pack(pady=20)
+
+        ttk.Button(self, text="Volver al Inicio", command=lambda: self.controller.mostrar_frame(Inicio),
+            style="Rounded.TButton").place(relx=1.0, rely=1.0, anchor="se", x=-20, y=-20)
+
+
+    def abrir_ventana_newton(self):
+        # Destruir elementos anteriores de la ventana
+        for widget in self.winfo_children():
+            widget.destroy()
+
+        # Crear nuevo frame
+        nuevo_frame = tk.Frame(self, bg="#dad2d8")
+        nuevo_frame.pack(fill="both", expand=True)
+
+        tk.Label(nuevo_frame, text="Algoritmo de Newton", font=("Times New Roman", 16), bg="#dad2d8").pack(pady=20)
+
+        # Entrada para la función f(x)
+        tk.Label(nuevo_frame, text="Función f(x):", bg="#dad2d8").pack(pady=5)
+        entry_func = tk.Entry(nuevo_frame, width=30)
+        entry_func.pack(pady=5)
+
+        # Entrada para la derivada f'(x)
+        tk.Label(nuevo_frame, text="Derivada f'(x):", bg="#dad2d8").pack(pady=5)
+        entry_deriv = tk.Entry(nuevo_frame, width=30)
+        entry_deriv.pack(pady=5)
+
+        # Entrada para x0 (valor inicial)
+        tk.Label(nuevo_frame, text="Valor inicial x0:", bg="#dad2d8").pack(pady=5)
+        entry_x0 = tk.Entry(nuevo_frame, width=15)
+        entry_x0.pack(pady=5)
+
+        # Entrada para epsilon (criterio de parada)
+        tk.Label(nuevo_frame, text="Epsilon (criterio de parada):", bg="#dad2d8").pack(pady=5)
+        entry_epsilon = tk.Entry(nuevo_frame, width=15)
+        entry_epsilon.pack(pady=5)
+
+        # Entrada para el número máximo de iteraciones
+        tk.Label(nuevo_frame, text="Máximo de iteraciones:", bg="#dad2d8").pack(pady=5)
+        entry_max_iter = tk.Entry(nuevo_frame, width=15)
+        entry_max_iter.pack(pady=5)
+
+        # Función para ejecutar el algoritmo de Newton
+        def ejecutar_newton():
+            try:
+                # Obtener valores de los widgets
+                func_str = entry_func.get()
+                deriv_str = entry_deriv.get()
+                x0 = float(entry_x0.get())
+                epsilon = float(entry_epsilon.get())
+                max_iter = int(entry_max_iter.get())
+
+                # Convertir las funciones a expresiones ejecutables
+                f = lambda x: eval(func_str, {"np": np, "x": x})
+                Df = lambda x: eval(deriv_str, {"np": np, "x": x})
+
+            except Exception as e:
+                tk.messagebox.showerror("Error", f"Entrada inválida: {e}")
+                return
+
+            # Ejecutar el método de Newton
+            def newton(f, Df, x0, epsilon, max_iter):
+                xn = x0
+                iter_data = []
+                start_time = time.time()
+
+                for n in range(max_iter):
+                    fxn = f(xn)
+                    if abs(fxn) < epsilon:
+                        end_time = time.time()
+                        return xn, n, iter_data, end_time - start_time
+
+                    Dfxn = Df(xn)
+                    if Dfxn == 0:
+                        return None, n, iter_data, time.time() - start_time
+
+                    correction = fxn / Dfxn
+                    iter_data.append((n, xn, fxn, -correction))
+                    xn = xn - correction
+
+                return None, max_iter, iter_data, time.time() - start_time
+
+            # Ejecutar el algoritmo de Newton
+            raiz, iteraciones, iter_data, tiempo_ejecucion = newton(f, Df, x0, epsilon, max_iter)
+
+            # Ocultar el frame de entrada y mostrar los resultados
+            nuevo_frame.pack_forget()
+
+            resultado_frame = tk.Frame(self, bg="#dad2d8")
+            resultado_frame.pack(fill="both", expand=True)
+
+            tk.Label(resultado_frame, text="Resultados del Algoritmo de Newton", font=("Times New Roman", 16), bg="#dad2d8").pack(pady=20)
+
+            # Tabla para mostrar iteraciones
+            tree = ttk.Treeview(resultado_frame, columns=("Iteración", "x_n", "f(x_n)", "Corrección"), show="headings")
+            tree.heading("Iteración", text="Iteración")
+            tree.heading("x_n", text="x_n")
+            tree.heading("f(x_n)", text="f(x_n)")
+            tree.heading("Corrección", text="Corrección")
+            tree.pack(pady=10)
+
+            for row in iter_data:
+                tree.insert("", "end", values=row)
+
+            # Mostrar resultados finales
+            tk.Label(resultado_frame, text=f"Raíz aproximada: {raiz:.6f}" if raiz is not None else "No se encontró solución", bg="#dad2d8", font=("Arial", 12)).pack(pady=5)
+            tk.Label(resultado_frame, text=f"Iteraciones realizadas: {iteraciones}", bg="#dad2d8", font=("Arial", 12)).pack(pady=5)
+            tk.Label(resultado_frame, text=f"Tiempo de ejecución: {tiempo_ejecucion:.6f} segundos", bg="#dad2d8", font=("Arial", 12)).pack(pady=5)
+
+            # Botón para volver a la entrada
+            ttk.Button(resultado_frame, text="Volver", command=self.crear_interfaz_principal, style="Rounded.TButton").pack(pady=10)
+
+        # Botón para ejecutar el algoritmo
+        ttk.Button(nuevo_frame, text="Ejecutar", command=ejecutar_newton, style="Rounded.TButton").pack(pady=20)
+
+        # Botón para volver al menú principal
+        ttk.Button(nuevo_frame, text="Volver", command=self.crear_interfaz_principal, style="Rounded.TButton").pack(pady=10)
+
+
+    def abrir_ventana_gradiente(self):
+        for widget in self.winfo_children():
+            widget.destroy()
+        
+        nuevo_frame = tk.Frame(self, bg="#dad2d8")
+        nuevo_frame.pack(fill="both", expand=True)
+        
+        tk.Label(nuevo_frame, text="Gradiente Descendente", font=("Times New Roman", 16), bg="#dad2d8").pack(pady=20)
+        
+        # Frame para los valores de entrada
+        frame_entrada = tk.Frame(nuevo_frame, bg="#dad2d8")
+        frame_entrada.pack(pady=10)
+
+        tk.Label(frame_entrada, text="Ingrese la función f(x):", bg="#dad2d8").pack()
+        entry_funcion = tk.Entry(frame_entrada)
+        entry_funcion.pack()
+
+        tk.Label(frame_entrada, text="Ingrese la derivada f'(x):", bg="#dad2d8").pack()
+        entry_gradiente = tk.Entry(frame_entrada)
+        entry_gradiente.pack()
+
+        tk.Label(frame_entrada, text="Ingrese la tasa de aprendizaje:", bg="#dad2d8").pack()
+        entry_learning_rate = tk.Entry(frame_entrada)
+        entry_learning_rate.pack()
+
+        tk.Label(frame_entrada, text="Ingrese el valor inicial x:", bg="#dad2d8").pack()
+        entry_x_inicial = tk.Entry(frame_entrada)
+        entry_x_inicial.pack()
+
+        tk.Label(frame_entrada, text="Ingrese el número de iteraciones:", bg="#dad2d8").pack()
+        entry_epochs = tk.Entry(frame_entrada)
+        entry_epochs.pack()
+
+        # Función para ejecutar el algoritmo y mostrar las gráficas
+        def ejecutar_gradiente():
+            # Obtener los valores ingresados
+            learning_rate = float(entry_learning_rate.get())
+            x = float(entry_x_inicial.get())
+            epochs = int(entry_epochs.get())
+
+            # Eliminar el frame de entrada
+            frame_entrada.destroy()
+
+            # Definir la función y su gradiente de forma estática (por ahora)
+            def f(x):
+                return x**2 + 2*x + 1
+
+            def gradient(x):
+                return 2*x + 2
+
+            # Listas para almacenar valores
+            x_values = [x]
+            y_values = [f(x)]
+
+            # Algoritmo de gradiente descendente
+            for _ in range(epochs):
+                x = x - learning_rate * gradient(x)
+                x_values.append(x)
+                y_values.append(f(x))
+
+            # Rango para graficar la función
+            x_range = np.linspace(-6, 4, 100)
+            y_range = f(x_range)
+
+            # Mínimo encontrado
+            x_min = x_values[-1]
+            y_min = f(x_min)
+
+            # Crear la figura para Matplotlib
+            fig = Figure(figsize=(12, 5))
+
+            # Primera gráfica: Variación de f(x)
+            ax1 = fig.add_subplot(121)
+            ax1.plot(range(len(y_values)), y_values, marker='o', linestyle='-', color='b', label='Valor de f(x)')
+            ax1.set_xlabel('Iteraciones')
+            ax1.set_ylabel('f(x)')
+            ax1.set_title('Variación de y en el Gradiente Descendente')
+            ax1.legend()
+            ax1.grid()
+
+            # Segunda gráfica: Función y mínimo encontrado
+            ax2 = fig.add_subplot(122)
+            ax2.plot(x_range, y_range, label='f(x) = x² + 2x + 1', color='g')
+            ax2.scatter(x_min, y_min, color='r', zorder=3, label=f'Mínimo ({x_min:.2f}, {y_min:.2f})')
+            ax2.set_xlabel('x')
+            ax2.set_ylabel('f(x)')
+            ax2.set_title('Función y Mínimo Encontrado')
+            ax2.legend()
+            ax2.grid()
+
+            # Frame para las gráficas
+            frame_graficas = tk.Frame(nuevo_frame, bg="#dad2d8")
+            frame_graficas.pack(fill="both", expand=True, pady=10)
+
+            # Integrar la figura en Tkinter
+            canvas = FigureCanvasTkAgg(fig, master=frame_graficas)
+            canvas.draw()
+            canvas.get_tk_widget().pack(fill="both", expand=True)
+
+            # Botón para volver a la interfaz principal
+            ttk.Button(nuevo_frame, text="Volver", command=self.crear_interfaz_principal, style="Rounded.TButton").pack(pady=20)
+
+        # Botón para ejecutar el algoritmo
+        ttk.Button(frame_entrada, text="Ejecutar", command=ejecutar_gradiente, style="Rounded.TButton").pack(pady=10)
+
+        # Botón para volver a la interfaz principal
+        ttk.Button(nuevo_frame, text="Volver", command=self.crear_interfaz_principal, style="Rounded.TButton").pack(pady=20)
+
+
+
+
+
+    def abrir_ventana_nelder_mead(self):
+        for widget in self.winfo_children():
+            widget.destroy()
+        
+        nuevo_frame = tk.Frame(self, bg="#dad2d8")
+        nuevo_frame.pack(fill="both", expand=True)
+        
+        tk.Label(nuevo_frame, text="Nelder-Mead", font=("Times New Roman", 16), bg="#dad2d8").pack(pady=20)
+
+        # Entrada para los valores iniciales
+        tk.Label(nuevo_frame, text="Valores iniciales (separados por comas):", bg="#dad2d8").pack(pady=5)
+        entry_x0 = ttk.Entry(nuevo_frame, width=30)
+        entry_x0.pack(pady=5)
+
+        # Entrada para la función a minimizar
+        tk.Label(nuevo_frame, text="Función f(x):", bg="#dad2d8").pack(pady=5)
+        entry_func = ttk.Entry(nuevo_frame, width=30)
+        entry_func.pack(pady=5)
+
+        # Botón para ejecutar el algoritmo
+        ttk.Button(nuevo_frame, text="Ejecutar", command=lambda: ejecutar_nelder_mead(entry_x0, entry_func, nuevo_frame), style="Rounded.TButton").pack(pady=10)
+
+        # Botón para volver
+        ttk.Button(nuevo_frame, text="Volver", command=self.crear_interfaz_principal, style="Rounded.TButton").pack(pady=20)
+
+        def ejecutar_nelder_mead(entry_x0, entry_func, frame_actual):
+            """Ejecuta el algoritmo de Nelder-Mead, oculta los widgets y muestra las gráficas."""
+            # Obtener valores antes de destruir el frame
+            valores_x0 = entry_x0.get()
+            funcion_texto = entry_func.get()
+
+            # Validación de los valores ingresados
+            try:
+                x0 = [float(val) for val in valores_x0.split(',')]
+            except ValueError:
+                tk.Label(frame_actual, text="Error: Ingrese valores iniciales válidos.", fg="red", bg="#dad2d8").pack()
+                return
+
+            # Evaluar la función ingresada
+            try:
+                func = lambda x: eval(funcion_texto, {"np": np, "x": x})
+            except Exception:
+                tk.Label(frame_actual, text="Error: Ingrese una función válida.", fg="red", bg="#dad2d8").pack()
+                return
+
+            # Ocultar frame actual
+            for widget in frame_actual.winfo_children():
+                widget.destroy()
+
+            # Crear el rango de valores para graficar
+            x = np.arange(-2, 2, 0.01)
+            y = np.vectorize(func)(x)
+
+            # Ejecutar el algoritmo para cada punto inicial
+            resultados = []
+            for x_start in x0:
+                result = minimize(func, x_start, method="nelder-mead")
+                resultados.append((result.x[0], result.fun))
+
+            # Crear nueva figura de Matplotlib
+            fig, ax = plt.subplots(len(x0), figsize=(4, 2 * len(x0)))
+            if len(x0) == 1:
+                ax = [ax]  # Asegurar que ax sea iterable
+
+            for i, (x_start, (x_min, y_min)) in enumerate(zip(x0, resultados)):
+                ax[i].plot(x, y, label="f(x)")
+                ax[i].plot(x_min, y_min, 'sr', label="Mínimo encontrado")
+                ax[i].set_title(f"Inicio en {x_start}")
+                ax[i].legend(loc='best', fancybox=True, shadow=True)
+                ax[i].grid()
+
+            plt.tight_layout()
+
+            # Mostrar la gráfica en Tkinter
+            canvas = FigureCanvasTkAgg(fig, master=frame_actual)
+            canvas.draw()
+            canvas.get_tk_widget().pack()
+
+            # Mostrar resultados numéricos en Tkinter
+            for i, x_start in enumerate(x0):
+                result = minimize(func, x_start, method="nelder-mead")
+                resultado_texto = f"Inicio en {x_start}: mínimo en x = {result.x[0]:.6f}, f(x) = {result.fun:.6f}"
+                tk.Label(frame_actual, text=resultado_texto, font=("Times New Roman", 12), bg="#dad2d8").pack(pady=5)
+
+
+
+            # Botón para volver
+            ttk.Button(frame_actual, text="Volver", command=self.crear_interfaz_principal, style="Rounded.TButton").pack(pady=20)
+
+
+
+
 
 if __name__ == "__main__":
     app = Aplicacion()
+
+    # Centrar la ventana
+    center_window_method(app, 1000, 650)
     app.mainloop()

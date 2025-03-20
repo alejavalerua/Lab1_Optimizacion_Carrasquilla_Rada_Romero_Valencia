@@ -324,15 +324,17 @@ class Pagina2(tk.Frame):
     
     def Respuesta1(self, n, m, densidad):
         if n == 10000 and m == 10000 and densidad == 0.3:
-            tk.Label(self.frame_result, text="Tiempos de ejecución:\nSuma: 11.073144 segundos\nMultiplicacion: 9.569799 segundos\nSumaCSC: 17.716476 segundos\nMultiplicacionCSC: 3.356753 segundos", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
+            texto_new = tk.Label(self.frame_result, text="Tiempos de ejecución:\nSuma: 11.073144 segundos\nMultiplicacion: 9.569799 segundos\nSumaCSC: 17.716476 segundos\nMultiplicacionCSC: 3.356753 segundos", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
+            texto_new.pack(pady=10)
         elif n == 2300 and m == 2300 and densidad == 0.4:
-            tk.Label(self.frame_result, text="Tiempos de ejecución:\nSuma: 1.778434 segundos\nMultiplicacion: 1.770377 segundos\nSumaCSC: 3.741542 segundos\nMultiplicacionCSC: 0.877646 segundos", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
+            texto_new.config(text="Tiempos de ejecución:\nSuma: 1.778434 segundos\nMultiplicacion: 1.770377 segundos\nSumaCSC: 3.741542 segundos\nMultiplicacionCSC: 0.877646 segundos")
             
     def Respuesta2(self, n, m, densidad):
         if n == 5000 and m == 5000 and densidad == 0.3:
-            tk.Label(self.frame_result, text="dense_add: 0.077806 seconds\ncsc_add: 0.125743 seconds\ncsr_add: 0.129825 seconds\ndense_mult: 1449.307397 seconds\ncsc_mult: 32.584927 seconds\ncsr_mult: 30.052353 seconds", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
+            texto2 = tk.Label(self.frame_result, text="dense_add: 0.077806 seconds\ncsc_add: 0.125743 seconds\ncsr_add: 0.129825 seconds\ndense_mult: 1449.307397 seconds\ncsc_mult: 32.584927 seconds\ncsr_mult: 30.052353 seconds", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
+            texto2.pack(pady=10)
         elif n == 1000 and m == 1000 and densidad == 0.1:
-            tk.Label(self.frame_result, text="dense_add: 0.008361 seconds\ncsc_add: 0.012299 seconds\ncsr_add: 0.004080 seconds\ndense_mult: 8.544605 seconds\ncsc_mult: 0.266038 seconds\ncsr_mult: 0.117754 seconds", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
+           texto2.config(text="dense_add: 0.008361 seconds\ncsc_add: 0.012299 seconds\ncsr_add: 0.004080 seconds\ndense_mult: 8.544605 seconds\ncsc_mult: 0.266038 seconds\ncsr_mult: 0.117754 seconds")
 
     def benchmark(n, m, densidad=0.2):
         def generate_sparse_matrix(n, m, density=0.2, min_val=1, max_val=10):

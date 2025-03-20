@@ -18,7 +18,7 @@ class Aplicacion(tk.Tk):
 
         # Configuración de la ventana
         self.title("Lösung")
-        self.geometry("1000x650+120-10")
+        self.geometry("1000x650+120-10") 
         self.resizable(False, False)
         self.iconphoto(True, tk.PhotoImage(file="data/Lab.png"))
         self.configure(bg="#dad2d8")
@@ -109,6 +109,7 @@ class Inicio(tk.Frame):
             boton.bind("<Enter>", lambda event, msg=mensaje: self.mostrar_mensaje(msg))
             boton.bind("<Leave>", self.ocultar_mensaje)
 
+        ttk.Button(self, text="Salir", command=self.quit, style="Rounded.TButton").place(relx=1.0, rely=1.0, anchor="se", x=-20, y=-20)
 
     def mostrar_mensaje(self, mensaje):
         """ Muestra el mensaje debajo de los botones """
@@ -121,101 +122,172 @@ class Inicio(tk.Frame):
 class Pagina1(tk.Frame):
     def __init__(self, parent, controller):
         super().__init__(parent)
-        self.configure(width=1000, height=650, bg="#dad2d8", bd=5)
-        title_P1 = tk.Label(self, text="Región Factible")
-        title_P1.config(fg="black", bg="#dad2d8", font=("Times New Roman", 20, "bold", "underline"))
+        self.configure(bg="#dad2d8")
+        # 🔹 Contenedor principal con Canvas y Scrollbar
+        self.canvas = tk.Canvas(self, bg="#dad2d8")
+        self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        
+        # 🔹 Frame dentro del Canvas donde irá el contenido
+        self.frame_contenido = tk.Frame(self.canvas, bg="#dad2d8")
+        # 🔹 Vinculación del Frame con el Canvas
+        self.frame_contenido.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+        
+        # 🔹 Crear una ventana dentro del Canvas para el contenido
+        self.window = self.canvas.create_window((0, 0), window=self.frame_contenido, anchor="nw")
+        # 🔹 Configurar el canvas con la scrollbar
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+        # 🔹 Posicionar elementos en la interfaz
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.scrollbar.pack(side="right", fill="y")
+        # ------------------------- 🔹 CONTENIDO DE LA VENTANA -------------------------
+        title_P1 = tk.Label(self.frame_contenido, text="Región Factible", fg="black", bg="#dad2d8",
+                            font=("Times New Roman", 20, "bold", "underline"))
         title_P1.pack(pady=10)
-
-        # texto
-        texto = tk.Label(self, text="Problema de optimización:", font=("Times New Roman", 13, "bold"), fg="black", bg="#dad2d8", wraplength=800, justify="left")
-        texto.pack(pady=2, anchor="w", padx=40)
-        texto1 = tk.Label(self, text="Una empresa fabrica dos tipos de productos: A y B. Cada unidad del producto A genera una ganancia de $5 y cada unidad del producto B genera una ganancia de $8. La empresa tiene 120 horas de trabajo disponibles y 100 unidades de materia prima.\n",font=("Times New Roman", 12), fg="black", bg="#dad2d8", wraplength=380, justify="left")
-        texto1.pack(pady=2, anchor="w", padx=40)
-        texto2 = tk.Label(self, text="Función de costo (Objetivo):", font=("Times New Roman", 13, "bold"), fg="black", bg="#dad2d8", wraplength=800, justify="left")
-        texto2.pack(pady=2, anchor="w", padx=40)
-        texto3 = tk.Label(self, text="Maximizar Z = 5x +  8y\n\nSujeto a:\n✍ cx + dy <= 120\n✍ gx + hy <= 100\n✍ x, y >= 0\n", font=("Times New Roman", 12), fg="black", bg="#dad2d8", wraplength=380, justify="left")
-        texto3.pack(pady=2, anchor="w", padx=40)
-        texto4 = tk.Label(self, text="El objetivo es determinar cuántas unidades de A y B debe producir la empresa para maximizar la ganancia.", font=("Times New Roman", 12, "bold"), fg="black", bg="#dad2d8", wraplength=380, justify="left")
-        texto4.pack(pady=5, anchor="w", padx=40)
-
-        # Frame para las restricciones
-        frame_restricciones = tk.Frame(self, bg="#dad2d8")
-        frame_restricciones.pack(anchor="w", padx=40, pady=5)
-
-        # Etiquetas y Entry para restricciones
+        descripcion = """Una empresa fabrica dos tipos de productos: A y B. Cada unidad del producto A genera una ganancia de $5 y cada unidad del producto B genera una ganancia de $8. La empresa tiene 120 horas de trabajo disponibles y 100 unidades de materia prima."""
+        
+        tk.Label(self.frame_contenido, text="Problema de optimización:", font=("Times New Roman", 13, "bold"),
+                 fg="black", bg="#dad2d8").pack(pady=2, anchor="w", padx=40)
+        tk.Label(self.frame_contenido, text=descripcion, font=("Times New Roman", 12),
+                 fg="black", bg="#dad2d8", wraplength=890, justify="left").pack(pady=2, anchor="w", padx=40)
+        # Función objetivo
+        tk.Label(self.frame_contenido, text="Función de costo (Objetivo):", font=("Times New Roman", 13, "bold"),
+                 fg="black", bg="#dad2d8").pack(anchor="w", pady=2, padx=40)
+        tk.Label(self.frame_contenido, text="Maximizar Z = 5x + 8y", font=("Times New Roman", 12),
+                 fg="black", bg="#dad2d8").pack(pady=2, anchor="w", padx=40)
+        tk.Label(self.frame_contenido, text="Sujeto a:", font=("Times New Roman", 13, "bold"), fg="black", bg="#dad2d8").pack(pady=2, anchor="w", padx=40)
+        tk.Label(self.frame_contenido, text="✍ cx + dy <= 120          ✍ gx + hy <= 100          ✍ x, y >= 0", font=("Times New Roman", 12), fg="black", bg="#dad2d8").pack(pady=2, anchor="w", padx=40)
+        
+        # Contenedor principal que tendrá ambos frames lado a lado
+        main_container = tk.Frame(self.frame_contenido, bg="#dad2d8")
+        main_container.pack(fill="both", expand=True, padx=40, pady=5)
+        
+        # Frame para restricciones (izquierda)
+        frame_restricciones = tk.Frame(main_container, bg="#dad2d8")
+        frame_restricciones.pack(side="left", anchor="nw", pady=5)
+        
+        # Frame para la evaluación de la función de costo (derecha)
+        frame_evaluacion = tk.Frame(main_container, bg="#dad2d8")
+        frame_evaluacion.pack(side="right", anchor="ne", pady=5, padx=20)
+        
+        # Contenido del frame de restricciones
         labels = ["c:", "d:", "r1:", "g:", "h:", "r2:"]
         self.entries = {}
-
         for i, label in enumerate(labels):
-            tk.Label(frame_restricciones, text=label, font=("Times New Roman", 12), bg="#dad2d8").grid(row=i, column=0, padx=5, pady=2, sticky="w")
+            tk.Label(frame_restricciones, text=label, font=("Times New Roman", 12, "bold"), bg="#dad2d8").grid(row=i, column=0, padx=5, pady=2, sticky="w")
             entry = tk.Entry(frame_restricciones, width=10)
             entry.grid(row=i, column=1, padx=5, pady=2)
-            self.entries[label] = entry  # Guardamos la referencia al Entry
-
-        # Botón para ejecutar la optimización
-        ttk.Button(self, text="Calcular y Graficar", command=self.calcular_optimizacion,
-                   style="Rounded.TButton").place(relx=1.0, rely=0.0, anchor="ne", x=-20, y=50)
+            entry.insert(0, "0")
+            self.entries[label] = entry
+            
+        # Contenido del frame de evaluación de función de costo
+        tk.Label(frame_evaluacion, text="Evaluación de la función de costo:", font=("Times New Roman", 12, "bold"), bg="#dad2d8").grid(row=0, column=0, columnspan=4, pady=10, sticky="w")
         
+        # Entradas para X e Y
+        self.entry_x = tk.Entry(frame_evaluacion, width=10)
+        self.entry_y = tk.Entry(frame_evaluacion, width=10)
+        
+        tk.Label(frame_evaluacion, text="X:", font=("Times New Roman", 12, "bold"), bg="#dad2d8").grid(row=1, column=0, padx=5, pady=5, sticky="e")
+        self.entry_x.grid(row=1, column=1, padx=5, pady=5)
+        self.entry_x.insert(0, "0")
+        
+        tk.Label(frame_evaluacion, text="Y:", font=("Times New Roman", 12, "bold"), bg="#dad2d8").grid(row=1, column=2, padx=5, pady=5, sticky="e")
+        self.entry_y.grid(row=1, column=3, padx=5, pady=5)
+        self.entry_y.insert(0, "0")
+        
+        # Label para mostrar el resultado
+        self.label_resultado = tk.Label(frame_evaluacion, text="Z = 5x + 8y = 0", font=("Times New Roman", 12), bg="#dad2d8")
+        self.label_resultado.grid(row=2, column=0, columnspan=4, padx=5, pady=10)
+        
+        # Botón para calcular la función de costo
+        ttk.Button(frame_evaluacion, text="Evaluar función", 
+                   command=self.calcular_funcion_costo, 
+                   style="Rounded.TButton").grid(row=3, column=0, columnspan=4, pady=10)
+        
+        # Botón para graficar
+        ttk.Button(self.frame_contenido, text="Graficar", 
+                   command=self.calcular_optimizacion,
+                   style="Rounded.TButton").pack(pady=10)
+        
+        # Frame para la gráfica
+        self.frame_grafica = tk.Frame(self.frame_contenido, bg="#dad2d8")
+        self.frame_grafica.pack(pady=20)
+        
+        # Frame para los valores de solución
+        frame_valores = tk.Frame(self.frame_contenido, bg="#dad2d8")
+        frame_valores.pack(pady=10)
+        
+        # Crear los Labels para X, Y, Z (resultados de la optimización)
+        self.labels_resultado = {}
+        for i, text in enumerate(["X = ", "Y = ", "Z = "]):
+            tk.Label(frame_valores, text=text, font=("Times New Roman", 12, "bold"), bg="#dad2d8").grid(row=0, column=i*2, padx=5, pady=2)
+            label_valor = tk.Label(frame_valores, text="--", font=("Times New Roman", 12), bg="#dad2d8")
+            label_valor.grid(row=0, column=i*2+1, padx=5, pady=2)
+            self.labels_resultado[text[0].lower()] = label_valor
+
         ttk.Button(self, text="Volver al Inicio", command=lambda: controller.mostrar_frame(Inicio),
                    style="Rounded.TButton").place(relx=1.0, rely=1.0, anchor="se", x=-20, y=-20)
-
-        # Frame para la gráfica
-        self.frame_grafica = tk.Frame(self, bg="#dad2d8")
-        self.frame_grafica.pack(pady=20)
-
-        # Frame para los valores x, y y Z
-        frame_valores = tk.Frame(self, bg="#dad2d8")
-        frame_valores.pack(pady=10)
-
-        for i, text in enumerate(["X:", "Y:", "Z:"]):
-            tk.Label(frame_valores, text=text, font=("Times New Roman", 12), bg="#dad2d8").grid(row=0, column=i*2, padx=5, pady=2)
-            entry = tk.Entry(frame_valores, width=10)
-            entry.grid(row=0, column=i*2+1, padx=5, pady=2)
-            setattr(self, f"entry_{text.lower()[0]}", entry)        
-
+               
+    def calcular_funcion_costo(self):
+        """Calcular el valor de la función de costo con los valores de X e Y ingresados"""
+        try:
+            x = float(self.entry_x.get())
+            y = float(self.entry_y.get())
+            z = 5 * x + 8 * y
+            self.label_resultado.config(text=f"Z = 5x + 8y = {z:.2f}")
+        except ValueError:
+            self.label_resultado.config(text="Error: Ingrese valores numéricos")
+        
     def calcular_optimizacion(self):
         try:
+            # Obtener valores desde la interfaz
             c, d, r1 = float(self.entries["c:"].get()), float(self.entries["d:"].get()), float(self.entries["r1:"].get())
             g, h, r2 = float(self.entries["g:"].get()), float(self.entries["h:"].get()), float(self.entries["r2:"].get())
-            
+
+            # Resolver la intersección
             A = np.array([[c, d], [g, h]])
             B = np.array([r1, r2])
             x_inter, y_inter = np.linalg.solve(A, B)
-            
+
+            # Crear valores de x
             x_vals = np.linspace(0, 40, 100)
             y1 = (r1 - c*x_vals) / d
             y2 = (r2 - g*x_vals) / h
-            
-            fig = plt.figure(figsize=(8, 6))
-            plt.plot(x_vals, y1, label=f'{c}x + {d}y = {r1}', color='blue')
-            plt.plot(x_vals, y2, label=f'{g}x + {h}y = {r2}', color='green')
-            plt.fill_between(x_vals, np.minimum(y1, y2), 0, where=(np.minimum(y1, y2) >= 0), color='gray', alpha=0.3)
-            plt.scatter(x_inter, y_inter, color='red', zorder=5, label="Intersección")
-            plt.xlim(0, 40)
-            plt.ylim(0, 40)
-            plt.xlabel('Unidades de A (x)')
-            plt.ylabel('Unidades de B (y)')
-            plt.legend()
-            plt.title('Región Factible')
-            plt.grid(True)
-            
+
+            # Graficar
+            fig, ax = plt.subplots(figsize=(6, 5))
+            ax.plot(x_vals, y1, label=f'{c}x + {d}y = {r1}', color='blue')
+            ax.plot(x_vals, y2, label=f'{g}x + {h}y = {r2}', color='green')
+
+            # Sombrear la región factible
+            ax.fill_between(x_vals, np.minimum(y1, y2), 0, where=(np.minimum(y1, y2) >= 0), color='gray', alpha=0.3)
+
+            # Marcar la intersección
+            ax.scatter(x_inter, y_inter, color='red', zorder=5, label="Intersección")
+
+            # Configuración del gráfico
+            ax.set_xlim(0, 40)
+            ax.set_ylim(0, 40)
+            ax.set_xlabel('Unidades de A (x)')
+            ax.set_ylabel('Unidades de B (y)')
+            ax.legend()
+            ax.set_title('Región Factible')
+            ax.grid(True)
+
+            # Mostrar la gráfica en la interfaz
             for widget in self.frame_grafica.winfo_children():
                 widget.destroy()
-            
+
             canvas = FigureCanvasTkAgg(fig, master=self.frame_grafica)
             canvas.draw()
             canvas.get_tk_widget().pack()
-            
-            self.entry_x.delete(0, tk.END)
-            self.entry_x.insert(0, round(x_inter, 2))
-            self.entry_y.delete(0, tk.END)
-            self.entry_y.insert(0, round(y_inter, 2))
-            self.entry_z.delete(0, tk.END)
-            self.entry_z.insert(0, round(5*x_inter + 8*y_inter, 2))
-        
+
+            # Mostrar resultados
+            self.labels_resultado['x'].config(text=round(x_inter, 2))
+            self.labels_resultado['y'].config(text=round(y_inter, 2))
+            self.labels_resultado['z'].config(text=round(5*x_inter + 8*y_inter, 2))
+
         except Exception as e:
-            print("Error en el cálculo:", e)
-            tk.messagebox.showerror("Error", "Ocurrió un error al calcular la optimización. Verifica los datos ingresados.")
+            messagebox.showerror("Error", f"Ocurrió un error: {e}")
 
 class Pagina2(tk.Frame):
     def __init__(self, parent, controller):
@@ -223,10 +295,10 @@ class Pagina2(tk.Frame):
         self.configure(width=1000, height=650, bg="#dad2d8", bd=5)
 
         # Título de la página
-        tk.Label(self, text="Página 2", font=("Times New Roman", 16)).pack(pady=20)
+        tk.Label(self, text="Matrices Sparse", font=("Times New Roman", 20, "bold", "underline"), bg="#dad2d8").pack(pady=20)
 
         # Selección de método de representación
-        tk.Label(self, text="Seleccione un método de representación:", font=("Times New Roman", 14, "bold"), bg="#dad2d8").pack(pady=10)
+        tk.Label(self, text="Seleccione un método de representación:", font=("Times New Roman", 12), bg="#dad2d8").pack(pady=10)
         self.metodos = ["Implementación propia", "Librerías"]
         self.combo_metodos = ttk.Combobox(self, values=self.metodos, state="readonly", font=("Times New Roman", 12))
         self.combo_metodos.pack(pady=10)
@@ -239,7 +311,7 @@ class Pagina2(tk.Frame):
 
         # Botón para volver al inicio
         ttk.Button(self, text="Volver al Inicio", command=lambda: controller.mostrar_frame(Inicio),
-               style="Rounded.TButton").pack(pady=20)
+                   style="Rounded.TButton").place(relx=1.0, rely=1.0, anchor="se", x=-20, y=-20)
 
     def mostrar_entradas(self, event):
         # Limpiar el frame de entradas
@@ -250,30 +322,28 @@ class Pagina2(tk.Frame):
 
         if metodo_seleccionado == "Implementación propia":
             # Entrada para el valor de n
-            tk.Label(self.frame_entradas, text="Ingrese el valor de n (debe ser < 30000):", font=("Times New Roman", 14, "bold"), bg="#dad2d8").pack(pady=10)
+            tk.Label(self.frame_entradas, text="➡︎ Ingrese el valor de n (debe ser < 30000):", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
             self.entry_n = tk.Entry(self.frame_entradas, width=10)
-            self.entry_n.pack(pady=10)
+            self.entry_n.pack(pady=10, padx=10)
 
             # Entrada para el valor de m
-            tk.Label(self.frame_entradas, text="Ingrese el valor de m (debe ser < 30000):", font=("Times New Roman", 14, "bold"), bg="#dad2d8").pack(pady=10)
+            tk.Label(self.frame_entradas, text="➡︎ Ingrese el valor de m (debe ser < 30000):", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
             self.entry_m = tk.Entry(self.frame_entradas, width=10)
-            self.entry_m.pack(pady=10)
+            self.entry_m.pack(pady=10, padx=10)
 
             # Entrada para la densidad
-            tk.Label(self.frame_entradas, text="Ingrese la densidad (entre 0.1 y 0.8):", font=("Times New Roman", 14, "bold"), bg="#dad2d8").pack(pady=10)
+            tk.Label(self.frame_entradas, text="➡︎ Ingrese la densidad (entre 0.1 y 0.8):", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
             self.entry_densidad = tk.Entry(self.frame_entradas, width=10)
-            self.entry_densidad.pack(pady=10)
+            self.entry_densidad.pack(pady=10, padx=10)
 
             # Botón para ejecutar la implementación propia
             ttk.Button(self.frame_entradas, text="Ejecutar", command=None, style="Rounded.TButton").pack(pady=10)
 
         elif metodo_seleccionado == "Librerías":
             # Entrada específica para Método 2
-            tk.Label(self.frame_entradas, text="Ingrese el valor específico para Método 2:", font=("Times New Roman", 14, "bold"), bg="#dad2d8").pack(pady=10)
+            tk.Label(self.frame_entradas, text="Ingrese el valor específico para Método 2:", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
             self.entry_metodo2 = tk.Entry(self.frame_entradas, width=10)
             self.entry_metodo2.pack(pady=10)
-
-
 
 class Pagina3(tk.Frame):
     def __init__(self, parent, controller):
@@ -316,7 +386,7 @@ class Pagina3(tk.Frame):
         ttk.Button(frame_controles, text="Generar Gráfica", command=self.generar_grafica, style="Rounded.TButton").grid(row=0, column=6, rowspan=2, padx=10, pady=5, sticky="w")
 
         # Label para mostrar el polinomio de Taylor
-        self.label_taylor = tk.Label(self, text="", font=("Times New Roman", 14), fg="black", bg="#dad2d8", wraplength=800, justify="left")
+        self.label_taylor = tk.Label(self, text="", font=("Times New Roman", 14), fg="black", bg="#dad2d8", wraplength=650, justify="left")
         self.label_taylor.pack(pady=5)
 
         # Frame para la gráfica
@@ -379,8 +449,6 @@ class Pagina3(tk.Frame):
             print(f"Error: {e}")
             tk.messagebox.showerror("Error", "Ocurrió un error al generar la gráfica. Verifica los datos ingresados.")
             return
-        
-
 
 class Pagina4(tk.Frame):
     def __init__(self, parent, controller):
@@ -395,7 +463,7 @@ class Pagina4(tk.Frame):
         for widget in self.winfo_children():
             widget.destroy()
 
-        tk.Label(self, text="Optimización sin Restricciones", font=("Times New Roman", 16)).pack(pady=10)
+        tk.Label(self, text="Optimización sin Restricciones", font=("Times New Roman", 20, "bold", "underline"), bg="#dad2d8").pack(pady=10)
         ttk.Button(self, text="Algoritmo de Newton", command=self.abrir_ventana_newton, style="Rounded.TButton").pack(pady=20)
         ttk.Button(self, text="Gradiente Descendente", command=self.abrir_ventana_gradiente, style="Rounded.TButton").pack(pady=20)
         ttk.Button(self, text="Nelder-Mead", command=self.abrir_ventana_nelder_mead, style="Rounded.TButton").pack(pady=20)
@@ -413,7 +481,7 @@ class Pagina4(tk.Frame):
         nuevo_frame = tk.Frame(self, bg="#dad2d8")
         nuevo_frame.pack(fill="both", expand=True)
 
-        tk.Label(nuevo_frame, text="Algoritmo de Newton", font=("Times New Roman", 16), bg="#dad2d8").pack(pady=20)
+        tk.Label(nuevo_frame, text="Algoritmo de Newton", font=("Times New Roman", 16, "bold"), bg="#dad2d8").pack(pady=20)
 
         # Entrada para la función f(x)
         tk.Label(nuevo_frame, text="Función f(x):", bg="#dad2d8").pack(pady=5)
@@ -524,7 +592,7 @@ class Pagina4(tk.Frame):
         nuevo_frame = tk.Frame(self, bg="#dad2d8")
         nuevo_frame.pack(fill="both", expand=True)
         
-        tk.Label(nuevo_frame, text="Gradiente Descendente", font=("Times New Roman", 16), bg="#dad2d8").pack(pady=20)
+        tk.Label(nuevo_frame, text="Gradiente Descendente", font=("Times New Roman", 16, "bold"), bg="#dad2d8").pack(pady=20)
         
         # Frame para los valores de entrada
         frame_entrada = tk.Frame(nuevo_frame, bg="#dad2d8")
@@ -636,7 +704,7 @@ class Pagina4(tk.Frame):
         nuevo_frame = tk.Frame(self, bg="#dad2d8")
         nuevo_frame.pack(fill="both", expand=True)
         
-        tk.Label(nuevo_frame, text="Nelder-Mead", font=("Times New Roman", 16), bg="#dad2d8").pack(pady=20)
+        tk.Label(nuevo_frame, text="Nelder-Mead", font=("Times New Roman", 16, "bold"), bg="#dad2d8").pack(pady=20)
 
         # Entrada para los valores iniciales
         tk.Label(nuevo_frame, text="Valores iniciales (separados por comas):", bg="#dad2d8").pack(pady=5)
@@ -717,9 +785,6 @@ class Pagina4(tk.Frame):
 
             # Botón para volver
             ttk.Button(frame_actual, text="Volver", command=self.crear_interfaz_principal, style="Rounded.TButton").pack(pady=20)
-
-
-
 
 
 if __name__ == "__main__":

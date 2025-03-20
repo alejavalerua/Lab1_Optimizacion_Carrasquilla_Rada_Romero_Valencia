@@ -221,16 +221,59 @@ class Pagina2(tk.Frame):
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.configure(width=1000, height=650, bg="#dad2d8", bd=5)
+
+        # Título de la página
         tk.Label(self, text="Página 2", font=("Times New Roman", 16)).pack(pady=20)
-        ttk.Button(self, text="Volver al Inicio", command=lambda: controller.mostrar_frame(Inicio),
-                   style="Rounded.TButton").place(relx=1.0, rely=1.0, anchor="se", x=-20, y=-20)
-        
+
+        # Selección de método de representación
         tk.Label(self, text="Seleccione un método de representación:", font=("Times New Roman", 14, "bold"), bg="#dad2d8").pack(pady=10)
-    
-        self.metodos = ["Método 1", "Método 2", "Método 3"]
+        self.metodos = ["Implementación propia", "Librerías"]
         self.combo_metodos = ttk.Combobox(self, values=self.metodos, state="readonly", font=("Times New Roman", 12))
         self.combo_metodos.pack(pady=10)
         self.combo_metodos.current(0)
+        self.combo_metodos.bind("<<ComboboxSelected>>", self.mostrar_entradas)
+
+        # Frame para las entradas
+        self.frame_entradas = tk.Frame(self, bg="#dad2d8")
+        self.frame_entradas.pack(pady=10)
+
+        # Botón para volver al inicio
+        ttk.Button(self, text="Volver al Inicio", command=lambda: controller.mostrar_frame(Inicio),
+               style="Rounded.TButton").pack(pady=20)
+
+    def mostrar_entradas(self, event):
+        # Limpiar el frame de entradas
+        for widget in self.frame_entradas.winfo_children():
+            widget.destroy()
+
+        metodo_seleccionado = self.combo_metodos.get()
+
+        if metodo_seleccionado == "Implementación propia":
+            # Entrada para el valor de n
+            tk.Label(self.frame_entradas, text="Ingrese el valor de n (debe ser < 30000):", font=("Times New Roman", 14, "bold"), bg="#dad2d8").pack(pady=10)
+            self.entry_n = tk.Entry(self.frame_entradas, width=10)
+            self.entry_n.pack(pady=10)
+
+            # Entrada para el valor de m
+            tk.Label(self.frame_entradas, text="Ingrese el valor de m (debe ser < 30000):", font=("Times New Roman", 14, "bold"), bg="#dad2d8").pack(pady=10)
+            self.entry_m = tk.Entry(self.frame_entradas, width=10)
+            self.entry_m.pack(pady=10)
+
+            # Entrada para la densidad
+            tk.Label(self.frame_entradas, text="Ingrese la densidad (entre 0.1 y 0.8):", font=("Times New Roman", 14, "bold"), bg="#dad2d8").pack(pady=10)
+            self.entry_densidad = tk.Entry(self.frame_entradas, width=10)
+            self.entry_densidad.pack(pady=10)
+
+            # Botón para ejecutar la implementación propia
+            ttk.Button(self.frame_entradas, text="Ejecutar", command=None, style="Rounded.TButton").pack(pady=10)
+
+        elif metodo_seleccionado == "Librerías":
+            # Entrada específica para Método 2
+            tk.Label(self.frame_entradas, text="Ingrese el valor específico para Método 2:", font=("Times New Roman", 14, "bold"), bg="#dad2d8").pack(pady=10)
+            self.entry_metodo2 = tk.Entry(self.frame_entradas, width=10)
+            self.entry_metodo2.pack(pady=10)
+
+
 
 class Pagina3(tk.Frame):
     def __init__(self, parent, controller):

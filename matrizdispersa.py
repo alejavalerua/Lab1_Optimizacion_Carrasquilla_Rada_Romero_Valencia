@@ -1,5 +1,4 @@
-import numpy as np
-import scipy.sparse as sp
+from itertools import zip_longest
 import random
 
 # Implementación propia de matrices dispersas

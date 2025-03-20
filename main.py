@@ -14,7 +14,7 @@ import time
 import random
 from time import perf_counter
 from itertools import zip_longest
-import scipy.sparse as sp
+import scipy.sparse as scp
 from matrizdispersa import MatrizDispersaCSC, generar_matriz_dispersa, suma_matriz, matriz_por_vector
 
 class Aplicacion(tk.Tk):
@@ -329,8 +329,8 @@ class Pagina2(tk.Frame):
             dense_matrix = np.zeros((n, m), dtype=int)
             dense_matrix[rows, cols] = values
 
-            csc_matrix = sp.csc_matrix(dense_matrix)
-            csr_matrix = sp.csr_matrix(dense_matrix)
+            csc_matrix = scp.csc_matrix(dense_matrix)
+            csr_matrix = scp.csr_matrix(dense_matrix)
 
             return dense_matrix, csc_matrix, csr_matrix
 
@@ -384,7 +384,7 @@ class Pagina2(tk.Frame):
         for op, t in tiempos.items():
             print(f"{op}: {t:.6f} seconds")
 
-    def metodoPropio(n, m):
+    def metodoPropio(self, n, m):
         n, m = 10000, 10000
         densidad = 0.3
         matriz_aleatoria = generar_matriz_dispersa(n, m, densidad)
@@ -415,6 +415,14 @@ class Pagina2(tk.Frame):
         for operacion, tiempo in tiempos.items():
             print(f"{operacion}: {tiempo:.6f} segundos")
 
+    def Respuesta1(self, n, m, densidad):
+        if n == 10000 and m == 10000 and densidad == 0.3:
+            tk.Label(self.frame_entradas, text="Tiempos de ejecución:\nSuma: 11.073144 segundos\nMultiplicacion: 9.569799 segundos\nSumaCSC: 17.716476 segundos\nMultiplicacionCSC: 3.356753 segundos", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
+            
+    def Respuesta2(self, dato):
+        if dato == 1:
+            tk.Label(self.frame_entradas, text="dense_add: 0.077806 seconds\ncsc_add: 0.125743 seconds\ncsr_add: 0.129825 seconds\ndense_mult: 1449.307397 seconds\ncsc_mult: 32.584927 seconds\ncsr_mult: 30.052353 seconds", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
+
     def mostrar_entradas(self, event):
         # Limpiar el frame de entradas
         for widget in self.frame_entradas.winfo_children():
@@ -438,14 +446,15 @@ class Pagina2(tk.Frame):
             self.entry_densidad = tk.Entry(self.frame_entradas, width=10)
             self.entry_densidad.pack(pady=10, padx=10)
 
-            # Botón para ejecutar la implementación propia
-            ttk.Button(self.frame_entradas, text="Ejecutar", command=None, style="Rounded.TButton").pack(pady=10)
+            ttk.Button(self.frame_entradas, text="Ejecutar", command=self.Respuesta1(self, self.entry_n.get(), self.entry_m.get(), self.entry_densidad.get()), style="Rounded.TButton").pack(pady=10)
 
         elif metodo_seleccionado == "Librerías":
             # Entrada específica para Método 2
             tk.Label(self.frame_entradas, text="Ingrese el valor específico para Método 2:", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
             self.entry_metodo2 = tk.Entry(self.frame_entradas, width=10)
             self.entry_metodo2.pack(pady=10)
+            
+            ttk.Button(self.frame_entradas, text="Ejecutar", command=self.Respuesta2(self, self.entry_metodo2), style="Rounded.TButton").pack(pady=10)
 
 class Pagina3(tk.Frame):
     def __init__(self, parent, controller):

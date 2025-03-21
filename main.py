@@ -1,8 +1,8 @@
+# All imports
 import numpy as np
 import sympy as sp
 import tkinter as tk
-from tkinter import ttk
-from tkinter import messagebox
+from tkinter import ttk, messagebox
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -11,9 +11,7 @@ from sympy import *
 from scipy.optimize import minimize
 from centrar_ventanas import center_window_method
 import time
-import random
 from time import perf_counter
-from itertools import zip_longest
 import scipy.sparse as scp
 from matrizdispersa import MatrizDispersaCSC, generar_matriz_dispersa, suma_matriz, matriz_por_vector
 
@@ -231,7 +229,7 @@ class Pagina1(tk.Frame):
 
         ttk.Button(self, text="Volver al Inicio", command=lambda: controller.mostrar_frame(Inicio),
                    style="Rounded.TButton").place(relx=1.0, rely=1.0, anchor="se", x=-20, y=-20)
-               
+
     def calcular_funcion_costo(self):
         """Calcular el valor de la función de costo con los valores de X e Y ingresados"""
         try:
@@ -304,7 +302,7 @@ class Pagina2(tk.Frame):
 
         # Selección de método de representación
         tk.Label(self, text="Seleccione un método de representación:", font=("Times New Roman", 12), bg="#dad2d8").pack(pady=10)
-        self.metodos = ["Implementación propia", "Librerías"]
+        self.metodos = ["Implementación propia", "Estándar, CSC, CSR (NP)"]
         self.combo_metodos = ttk.Combobox(self, values=self.metodos, state="readonly", font=("Times New Roman", 12))
         self.combo_metodos.pack(pady=10)
         self.combo_metodos.current(0)
@@ -321,157 +319,164 @@ class Pagina2(tk.Frame):
         # Frame para resultado
         self.frame_result = tk.Frame(self, bg="#dad2d8")
         self.frame_result.pack(pady=10)
-    
-    def Respuesta1(self, n, m, densidad):
-        if n == 10000 and m == 10000 and densidad == 0.3:
-            texto_new = tk.Label(self.frame_result, text="Tiempos de ejecución:\nSuma: 11.073144 segundos\nMultiplicacion: 9.569799 segundos\nSumaCSC: 17.716476 segundos\nMultiplicacionCSC: 3.356753 segundos", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
-            texto_new.pack(pady=10)
-        elif n == 2300 and m == 2300 and densidad == 0.4:
-            texto_new.config(text="Tiempos de ejecución:\nSuma: 1.778434 segundos\nMultiplicacion: 1.770377 segundos\nSumaCSC: 3.741542 segundos\nMultiplicacionCSC: 0.877646 segundos")
+
+    def Respuesta1(self, nn=1000, mm=1000, den=0.3):
+
+        for widget in self.frame_result.winfo_children():
+            widget.destroy()
+
+        def metodoPropio(n=nn, m=mm, densidad=den):
+            matriz_aleatoria = generar_matriz_dispersa(n, m, densidad)
+            matriz_aleatoriaCSC = MatrizDispersaCSC(matriz_aleatoria, forma=(n, m))
+            tiempos = {}
+
+            t_ini = perf_counter()
+            suma_matriz(matriz_aleatoria, matriz_aleatoria)
+            t_fin = perf_counter()
+            tiempos["Suma"] = t_fin - t_ini
+
+            t_ini = perf_counter()
+            matriz_por_vector(matriz_aleatoria, [2] * m)
+            t_fin = perf_counter()
+            tiempos["Multiplicacion"] = t_fin - t_ini
+
+            t_ini = perf_counter()
+            matriz_aleatoriaCSC.sumar(matriz_aleatoriaCSC)
+            t_fin = perf_counter()
+            tiempos["SumaCSC"] = t_fin - t_ini
+
+            t_ini = perf_counter()
+            matriz_aleatoriaCSC.multiplicar_vector([2] * m)
+            t_fin = perf_counter()
+            tiempos["MultiplicacionCSC"] = t_fin - t_ini
+
+            resultado_string = "Tiempos de ejecuión:\n"
+            for op, t in tiempos.items():
+                resultado_string += f"{op}: {t:.6f} seconds\n"
+            return resultado_string
+
+        respuesta = metodoPropio(nn, mm, den)
+        texto_new = tk.Label(self.frame_result, text=respuesta, font=("Times New Roman", 13), bg="#dad2d8")
+        texto_new.pack(pady=10)
             
     def Respuesta2(self, n, m, densidad):
-        if n == 5000 and m == 5000 and densidad == 0.3:
-            texto2 = tk.Label(self.frame_result, text="dense_add: 0.077806 seconds\ncsc_add: 0.125743 seconds\ncsr_add: 0.129825 seconds\ndense_mult: 1449.307397 seconds\ncsc_mult: 32.584927 seconds\ncsr_mult: 30.052353 seconds", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
-            texto2.pack(pady=10)
-        elif n == 1000 and m == 1000 and densidad == 0.1:
-           texto2.config(text="dense_add: 0.008361 seconds\ncsc_add: 0.012299 seconds\ncsr_add: 0.004080 seconds\ndense_mult: 8.544605 seconds\ncsc_mult: 0.266038 seconds\ncsr_mult: 0.117754 seconds")
+        for widget in self.frame_result.winfo_children():
+            widget.destroy()
 
-    def benchmark(n, m, densidad=0.2):
-        def generate_sparse_matrix(n, m, density=0.2, min_val=1, max_val=10):
-            """Genera una matriz sparse con una densidad cualquiera."""
-            size = int(n * m * density)
-            rows = np.random.randint(0, n, size)
-            cols = np.random.randint(0, m, size)
-            values = np.random.randint(min_val, max_val, size)
+        def benchmark(nn=n, mm=m, densidad=0.2):
 
-            dense_matrix = np.zeros((n, m), dtype=int)
-            dense_matrix[rows, cols] = values
+            def generate_sparse_matrix(n=nn, m=mm, density=densidad, min_val=1, max_val=10):
+                """Genera una matriz sparse con una densidad cualquiera."""
+                size = int(n * m * density)
+                rows = np.random.randint(0, n, size)
+                cols = np.random.randint(0, m, size)
+                values = np.random.randint(min_val, max_val, size)
 
-            csc_matrix = scp.csc_matrix(dense_matrix)
-            csr_matrix = scp.csr_matrix(dense_matrix)
+                dense_matrix = np.zeros((n, m), dtype=int)
+                dense_matrix[rows, cols] = values
 
-            return dense_matrix, csc_matrix, csr_matrix
+                csc_matrix = scp.csc_matrix(dense_matrix)
+                csr_matrix = scp.csr_matrix(dense_matrix)
 
-        def add_normal(A, B):
-            return A + B
+                return dense_matrix, csc_matrix, csr_matrix
 
-        def add_csc(A, B):
-            return A + B
+            def add_normal(A, B):
+                return A + B
 
-        def add_csr(A, B):
-            return A + B
+            def add_csc(A, B):
+                return A + B
 
-        def multiply_normal(A, B):
-            return np.dot(A, B)
+            def add_csr(A, B):
+                return A + B
 
-        def multiply_csc(A, B):
-            return (A @ B).tocsc()
+            def multiply_normal(A, B):
+                return np.dot(A, B)
 
-        def multiply_csr(A, B):
-            return (A @ B).tocsr()
-        
-        A_dense, A_csc, A_csr = generate_sparse_matrix(n, m, densidad)
-        B_dense, B_csc, B_csr = generate_sparse_matrix(n, m, densidad)
+            def multiply_csc(A, B):
+                return (A @ B).tocsc()
 
-        tiempos = {}  # Diccionario de tiempos
+            def multiply_csr(A, B):
+                return (A @ B).tocsr()
+            
+            A_dense, A_csc, A_csr = generate_sparse_matrix(nn, mm, densidad)
+            B_dense, B_csc, B_csr = generate_sparse_matrix(nn, mm, densidad)
 
-        tiempos['dense_add'] = perf_counter()
-        add_normal(A_dense, B_dense)
-        tiempos['dense_add'] = perf_counter() - tiempos['dense_add']
+            tiempos = {}  # Diccionario de tiempos
 
-        tiempos['csc_add'] = perf_counter()
-        add_csc(A_csc, B_csc)
-        tiempos['csc_add'] = perf_counter() - tiempos['csc_add']
+            tiempos['dense_add'] = perf_counter()
+            add_normal(A_dense, B_dense)
+            tiempos['dense_add'] = perf_counter() - tiempos['dense_add']
 
-        tiempos['csr_add'] = perf_counter()
-        add_csr(A_csr, B_csr)
-        tiempos['csr_add'] = perf_counter() - tiempos['csr_add']
+            tiempos['csc_add'] = perf_counter()
+            add_csc(A_csc, B_csc)
+            tiempos['csc_add'] = perf_counter() - tiempos['csc_add']
 
-        tiempos['dense_mult'] = perf_counter()
-        multiply_normal(A_dense, B_dense)
-        tiempos['dense_mult'] = perf_counter() - tiempos['dense_mult']
+            tiempos['csr_add'] = perf_counter()
+            add_csr(A_csr, B_csr)
+            tiempos['csr_add'] = perf_counter() - tiempos['csr_add']
 
-        tiempos['csc_mult'] = perf_counter()
-        multiply_csc(A_csc, B_csc)
-        tiempos['csc_mult'] = perf_counter() - tiempos['csc_mult']
+            tiempos['dense_mult'] = perf_counter()
+            multiply_normal(A_dense, B_dense)
+            tiempos['dense_mult'] = perf_counter() - tiempos['dense_mult']
 
-        tiempos['csr_mult'] = perf_counter()
-        multiply_csr(A_csr, B_csr)
-        tiempos['csr_mult'] = perf_counter() - tiempos['csr_mult']
+            tiempos['csc_mult'] = perf_counter()
+            multiply_csc(A_csc, B_csc)
+            tiempos['csc_mult'] = perf_counter() - tiempos['csc_mult']
 
-        resultado_string = ""
-        for op, t in tiempos.items():
-            print(f"{op}: {t:.6f} seconds")
+            tiempos['csr_mult'] = perf_counter()
+            multiply_csr(A_csr, B_csr)
+            tiempos['csr_mult'] = perf_counter() - tiempos['csr_mult']
 
-    def metodoPropio(self, n, m):
-        n, m = 10000, 10000
-        densidad = 0.3
-        matriz_aleatoria = generar_matriz_dispersa(n, m, densidad)
-        matriz_aleatoriaCSC = MatrizDispersaCSC(matriz_aleatoria, forma=(n, m))
-        tiempos = {}
+            resultado_string = ""
+            for op, t in tiempos.items():
+                resultado_string += f"{op}: {t:.6f} seconds\n"
+            return resultado_string
 
-        t_ini = perf_counter()
-        suma_matriz(matriz_aleatoria, matriz_aleatoria)
-        t_fin = perf_counter()
-        tiempos["Suma"] = t_fin - t_ini
-
-        t_ini = perf_counter()
-        matriz_por_vector(matriz_aleatoria, [2] * m)
-        t_fin = perf_counter()
-        tiempos["Multiplicacion"] = t_fin - t_ini
-
-        t_ini = perf_counter()
-        matriz_aleatoriaCSC.sumar(matriz_aleatoriaCSC)
-        t_fin = perf_counter()
-        tiempos["SumaCSC"] = t_fin - t_ini
-
-        t_ini = perf_counter()
-        matriz_aleatoriaCSC.multiplicar_vector([2] * m)
-        t_fin = perf_counter()
-        tiempos["MultiplicacionCSC"] = t_fin - t_ini
-
-        print("Tiempos de ejecución:")
-        for operacion, tiempo in tiempos.items():
-            print(f"{operacion}: {tiempo:.6f} segundos")
+        respuesta = benchmark(n, m, densidad)
+        texto2 = tk.Label(self.frame_result, text=respuesta, font=("Times New Roman", 13), bg="#dad2d8")
+        texto2.pack(pady=10)
 
     def mostrar_entradas(self, event):
         # Limpiar el frame de entradas
         for widget in self.frame_entradas.winfo_children():
             widget.destroy()
 
+        for widget in self.frame_result.winfo_children():
+            widget.destroy()
+
         metodo_seleccionado = self.combo_metodos.get()
 
         if metodo_seleccionado == "Implementación propia":
-            # Entrada para el valor de n
-            tk.Label(self.frame_entradas, text="➡︎ Ingrese el valor de n (debe ser < 30000):", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
+           # Entrada para el valor de n
+            tk.Label(self.frame_entradas, text="➡︎ Ingrese el valor de n (< 30000):", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
             self.entry_n = tk.Entry(self.frame_entradas, width=10)
             self.entry_n.pack(pady=10, padx=10)
 
             # Entrada para el valor de m
-            tk.Label(self.frame_entradas, text="➡︎ Ingrese el valor de m (debe ser < 30000):", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
+            tk.Label(self.frame_entradas, text="➡︎ Ingrese el valor de m (< 30000):", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
             self.entry_m = tk.Entry(self.frame_entradas, width=10)
             self.entry_m.pack(pady=10, padx=10)
 
             # Entrada para la densidad
-            tk.Label(self.frame_entradas, text="➡︎ Ingrese la densidad (entre 0.1 y 0.8):", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
+            tk.Label(self.frame_entradas, text="➡︎ Ingrese la densidad (0.1 - 0.8):", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
             self.entry_densidad = tk.Entry(self.frame_entradas, width=10)
             self.entry_densidad.pack(pady=10, padx=10)
 
             ttk.Button(self.frame_entradas, text="Ejecutar", command=lambda: self.Respuesta1(int(self.entry_n.get()), int(self.entry_m.get()), float(self.entry_densidad.get())), style="Rounded.TButton").pack(pady=5)
 
-        elif metodo_seleccionado == "Librerías":
+        elif metodo_seleccionado == "Estándar, CSC, CSR (NP)":
            # Entrada para el valor de n
-            tk.Label(self.frame_entradas, text="➡︎ Ingrese el valor de n (debe ser < 30000):", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
+            tk.Label(self.frame_entradas, text="➡︎ Ingrese el valor de n (< 30000):", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
             self.entry_n = tk.Entry(self.frame_entradas, width=10)
             self.entry_n.pack(pady=10, padx=10)
 
             # Entrada para el valor de m
-            tk.Label(self.frame_entradas, text="➡︎ Ingrese el valor de m (debe ser < 30000):", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
+            tk.Label(self.frame_entradas, text="➡︎ Ingrese el valor de m (< 30000):", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
             self.entry_m = tk.Entry(self.frame_entradas, width=10)
             self.entry_m.pack(pady=10, padx=10)
 
             # Entrada para la densidad
-            tk.Label(self.frame_entradas, text="➡︎ Ingrese la densidad (entre 0.1 y 0.8):", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
+            tk.Label(self.frame_entradas, text="➡︎ Ingrese la densidad (0.1 - 0.8):", font=("Times New Roman", 13), bg="#dad2d8").pack(pady=10)
             self.entry_densidad = tk.Entry(self.frame_entradas, width=10)
             self.entry_densidad.pack(pady=10, padx=10)
             
@@ -913,15 +918,11 @@ class Pagina4(tk.Frame):
                 resultado_texto = f"Inicio en {x_start}: mínimo en x = {result.x[0]:.6f}, f(x) = {result.fun:.6f}"
                 tk.Label(frame_actual, text=resultado_texto, font=("Times New Roman", 12), bg="#dad2d8").pack(pady=5)
 
-
-
             # Botón para volver
             ttk.Button(frame_actual, text="Volver", command=self.crear_interfaz_principal, style="Rounded.TButton").pack(pady=20)
 
 
 if __name__ == "__main__":
     app = Aplicacion()
-
-    # Centrar la ventana
     center_window_method(app, 1000, 650)
     app.mainloop()

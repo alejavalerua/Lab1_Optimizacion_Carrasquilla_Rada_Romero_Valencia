@@ -15,12 +15,12 @@ class MatrizDispersaCSC:
           for fil in zip_longest(*matriz, fillvalue=None):
             fil = [(col + 1, x) for col, x in enumerate(fil) if x != 0]
             if len(fil) == 0:
-              continue
+                continue
             self.indices_columnas.append(current_index)
             current_index += len(fil)
             for col, elem in fil:
-              self.elementos.append(elem)
-              self.filas.append(col)
+                self.elementos.append(elem)
+                self.filas.append(col)
           self.indices_columnas.append(self.indices_columnas[0] + len(self.filas))
 
     def __str__(self):
